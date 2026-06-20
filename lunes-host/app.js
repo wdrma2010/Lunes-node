@@ -1,40 +1,20 @@
 const { spawn } = require("child_process");
 
-// Binary and config definitions
-const apps = [
-  {
-    name: "xy",
-    binaryPath: "/home/container/xy/xy",
-    args: ["-c", "/home/container/xy/config.json"]
-  },
-  {
-    name: "h2",
-    binaryPath: "/home/container/h2/h2",
-    args: ["server", "-c", "/home/container/h2/config.yaml"]
-  }
-];
+// Process manager - runs setup.js which handles everything
+const script = "/home/container/setup.js";
 
-// Run binary with keep-alive
-function runProcess(app) {
-  const child = spawn(app.binaryPath, app.args, { stdio: "inherit" });
+function run() {
+  const child = spawn("node", [script], { stdio: "inherit" });
 
   child.on("exit", (code) => {
-    console.log(`[EXIT] ${app.name} exited with code: ${code}`);
-    console.log(`[RESTART] Restarting ${app.name}...`);
-    setTimeout(() => runProcess(app), 3000); // restart after 3s
+    console.log(`[MANAGER] setup.js exited (${code}), restarting in 3s...`);
+    setTimeout(run, 3000);
+  });
+
+  child.on("error", (err) => {
+    console.log(`[MANAGER] Error: ${err.message}, restarting in 3s...`);
+    setTimeout(run, 3000);
   });
 }
 
-// Main execution
-function main() {
-  try {
-    for (const app of apps) {
-      runProcess(app);
-    }
-  } catch (err) {
-    console.error("[ERROR] Startup failed:", err);
-    process.exit(1);
-  }
-}
-
-main();
+run();

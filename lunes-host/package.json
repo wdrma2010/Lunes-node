@@ -1,11 +1,11 @@
 {
-  "name": "lunes-host",
-  "version": "1.0.0",
-  "description": "Xray & Hysteria2 Startup Script for Lunes Host LLC",
+  "name": "lunes-node",
+  "version": "2.0.0",
+  "description": "Enhanced proxy node for Lunes Host - VLESS Reality + Hysteria2",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
   },
-  "author": "vevc",
+  "author": "wdrma2010",
   "license": "MIT"
 }
