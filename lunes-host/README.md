@@ -12,6 +12,26 @@ Lunes Host 平台增强版代理节点部署脚本，支持 VLESS + Reality 和 
 
 ## 快速开始
 
+### 一键安装（推荐）
+
+在 Lunes 面板的 **Console** 中执行以下命令：
+
+```bash
+curl -s https://raw.githubusercontent.com/wdrma2010/Lunes-node/main/lunes-host/install.sh |
+env DOMAIN=node24.lunes.host PORT=3134 UUID=$(cat /proc/sys/kernel/random/uuid) HY2_PASSWORD='YourPassword' bash
+```
+
+**参数说明：**
+- `DOMAIN` - 你的 Lunes 域名（如 `node24.lunes.host`）
+- `PORT` - 你的端口号（如 `3134`）
+- `UUID` - 自动生成，也可手动指定
+- `HY2_PASSWORD` - Hysteria2 密码，建议修改
+
+安装完成后：
+1. 设置启动命令为 `node setup.js`
+2. 重启容器
+3. 查看 `node.txt` 获取连接链接
+
 ### 前置条件
 
 1. 已注册 Lunes Host 账号

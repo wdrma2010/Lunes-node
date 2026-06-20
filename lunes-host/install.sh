@@ -1,46 +1,67 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+set -e
 
-DOMAIN="${DOMAIN:-node68.lunes.host}"
-PORT="${PORT:-10008}"
-UUID="${UUID:-2584b733-9095-4bec-a7d5-62b473540f7a}"
-HY2_PASSWORD="${HY2_PASSWORD:-vevc.HY2.Password}"
+# ============================================================
+# Lunes Node - One-Click Installer
+# ============================================================
+# Usage:
+#   curl -s https://raw.githubusercontent.com/wdrma2010/Lunes-node/main/lunes-host/install.sh |
+#   env DOMAIN=node24.lunes.host PORT=3134 UUID=$(cat /proc/sys/kernel/random/uuid) HY2_PASSWORD='YourPassword' bash
+# ============================================================
 
-curl -sSL -o app.js https://raw.githubusercontent.com/vevc/one-node/refs/heads/main/lunes-host/app.js
-curl -sSL -o package.json https://raw.githubusercontent.com/vevc/one-node/refs/heads/main/lunes-host/package.json
+DOMAIN="${DOMAIN:-node24.lunes.host}"
+PORT="${PORT:-3134}"
+UUID="${UUID:-$(cat /proc/sys/kernel/random/uuid)}"
+HY2_PASSWORD="${HY2_PASSWORD:-$(openssl rand -base64 16)}"
 
+echo "============================================================"
+echo "  Lunes Node Installer"
+echo "============================================================"
+echo "  Domain:    $DOMAIN"
+echo "  Port:      $PORT"
+echo "  UUID:      $UUID"
+echo "============================================================"
+
+# Base URL for raw files
+BASE_URL="https://raw.githubusercontent.com/wdrma2010/Lunes-node/main/lunes-host"
+
+# Download files
+echo "[1/3] Downloading files..."
+curl -sSL -o /home/container/setup.js "$BASE_URL/setup.js"
+curl -sSL -o /home/container/app.js "$BASE_URL/app.js"
+curl -sSL -o /home/container/package.json "$BASE_URL/package.json"
+
+# Replace placeholders in setup.js
+echo "[2/3] Configuring..."
+sed -i "s|YOUR_UUID|$UUID|g" /home/container/setup.js
+sed -i "s|YOUR_DOMAIN.lunes.host|$DOMAIN|g" /home/container/setup.js
+sed -i "s|PORT = 3134|PORT = $PORT|g" /home/container/setup.js
+sed -i "s|YOUR_PASSWORD|$HY2_PASSWORD|g" /home/container/setup.js
+
+# Download Xray
+echo "[3/3] Installing Xray-core..."
 mkdir -p /home/container/xy
 cd /home/container/xy
 curl -sSL -o Xray-linux-64.zip https://github.com/XTLS/Xray-core/releases/download/v25.8.3/Xray-linux-64.zip
-unzip Xray-linux-64.zip
-rm Xray-linux-64.zip
+unzip -q -o Xray-linux-64.zip
+rm -f Xray-linux-64.zip
 mv xray xy
-curl -sSL -o config.json https://raw.githubusercontent.com/vevc/one-node/refs/heads/main/lunes-host/xray-config.json
-sed -i "s/10008/$PORT/g" config.json
-sed -i "s/YOUR_UUID/$UUID/g" config.json
-keyPair=$(./xy x25519)
-privateKey=$(echo "$keyPair" | grep "Private key" | awk '{print $3}')
-publicKey=$(echo "$keyPair" | grep "Public key" | awk '{print $3}')
-sed -i "s/YOUR_PRIVATE_KEY/$privateKey/g" config.json
-shortId=$(openssl rand -hex 4)
-sed -i "s/YOUR_SHORT_ID/$shortId/g" config.json
-vlessUrl="vless://$UUID@$DOMAIN:$PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.cloudflare.com&fp=chrome&pbk=$publicKey&sid=$shortId&spx=%2F&type=tcp&headerType=none#lunes-reality"
-echo $vlessUrl > /home/container/node.txt
+chmod +x xy
 
+# Download Hysteria2
 mkdir -p /home/container/h2
 cd /home/container/h2
 curl -sSL -o h2 https://github.com/apernet/hysteria/releases/download/app%2Fv2.6.2/hysteria-linux-amd64
-curl -sSL -o config.yaml https://raw.githubusercontent.com/vevc/one-node/refs/heads/main/lunes-host/hysteria-config.yaml
-openssl req -x509 -newkey rsa:2048 -days 3650 -nodes -keyout key.pem -out cert.pem -subj "/CN=$DOMAIN"
 chmod +x h2
-sed -i "s/10008/$PORT/g" config.yaml
-sed -i "s/HY2_PASSWORD/$HY2_PASSWORD/g" config.yaml
-encodedHy2Pwd=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$HY2_PASSWORD")
-hy2Url="hysteria2://$encodedHy2Pwd@$DOMAIN:$PORT?insecure=1#lunes-hy2"
-echo $hy2Url >> /home/container/node.txt
 
+echo ""
 echo "============================================================"
-echo "🚀 VLESS Reality & HY2 Node Info"
-echo "------------------------------------------------------------"
-echo "$vlessUrl"
-echo "$hy2Url"
+echo "  Installation Complete!"
+echo "============================================================"
+echo ""
+echo "  Next steps:"
+echo "  1. Set Startup Command to: node setup.js"
+echo "  2. Restart the container"
+echo "  3. Check node.txt for connection URLs"
+echo ""
 echo "============================================================"
